@@ -1,6 +1,6 @@
 # ReelBrain
 
-**Live app → https://ingenious-celebration-production-bf4c.up.railway.app**
+**Live app → https://reelbrain-production.up.railway.app**
 
 Your personal video memory. Save short-form videos from TikTok, Instagram, and YouTube Shorts, then chat with them using AI.
 
