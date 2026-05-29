@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReelBrain</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #09090f;
+      --surface: #111118;
+      --surface2: #18181f;
+      --surface3: #1f1f28;
+      --border: #26263a;
+      --border2: #32324a;
+      --accent: #7c3aed;
+      --accent-l: #9d5aff;
+      --accent-dim: rgba(124,58,237,0.13);
+      --accent-glow: rgba(124,58,237,0.25);
+      --text: #eeeef5;
+      --text2: #9090b0;
+      --text3: #55556a;
+      --instagram: #e1306c;
+      --tiktok: #69c9d0;
+      --youtube: #ff4444;
+      --green: #22c55e;
+      --red: #ef4444;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── UTILITIES ──────────────────────────────── */
+    .hidden { display: none !important; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .gap-4 { gap: 16px; }
+    .w-full { width: 100%; }
+    .min-h-screen { min-height: 100vh; }
+    .text-sm { font-size: 12px; }
+    .text-muted { color: var(--text3); }
+    .text-2 { color: var(--text2); }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ── SCROLLBAR ──────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+    /* ── BUTTONS ────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: var(--accent-l); }
+    .btn-secondary {
+      background: var(--surface3);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: var(--border); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text2);
+      padding: 6px 10px;
+    }
+    .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+    .btn-icon {
+      background: var(--surface2);
+      color: var(--text2);
+      border: 1px solid var(--border);
+      padding: 8px;
+      border-radius: 8px;
+    }
+    .btn-icon:hover { border-color: var(--border2); color: var(--text); }
+    .btn-danger {
+      background: rgba(239,68,68,0.12);
+      color: var(--red);
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.2); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ── INPUTS ─────────────────────────────────── */
+    input, textarea, select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    input { padding: 10px 14px; }
+    textarea { padding: 10px 14px; resize: vertical; }
+    select { padding: 10px 14px; cursor: pointer; }
+    input::placeholder, textarea::placeholder { color: var(--text3); }
+
+    /* ── BADGES ─────────────────────────────────── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+    .badge-instagram { background: rgba(225,48,108,0.15); color: var(--instagram); }
+    .badge-tiktok { background: rgba(105,201,208,0.15); color: var(--tiktok); }
+    .badge-youtube_shorts { background: rgba(255,68,68,0.15); color: var(--youtube); }
+    .badge-other { background: var(--surface3); color: var(--text2); }
+    .badge-category {
+      background: var(--accent-dim);
+      color: var(--accent-l);
+      font-size: 11px;
+    }
+
+    /* ══════════════════════════════════════════════
+       VIEW: SETUP
+    ══════════════════════════════════════════════ */
+    #v-setup {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .setup-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px;
+    }
+    .setup-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+    .setup-logo-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--accent-dim);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--accent-glow);
+    }
+    .setup-logo-name {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .setup-logo-name span { color: var(--accent-l); }
+    .setup-tagline {
+      font-size: 15px;
+      color: var(--text);
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .setup-sub {
+      color: var(--text2);
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+    .setup-label {
+      display: block;
+      color: var(--text2);
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .setup-hint {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text3);
+    }
+    .setup-hint a { color: var(--accent-l); text-decoration: none; }
+    .setup-features {
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .setup-feature {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text2);
+    }
+    .setup-feature svg { flex-shrink: 0; margin-top: 1px; }
+
+    /* ══════════════════════════════════════════════
+       VIEW: LIBRARY
+    ══════════════════════════════════════════════ */
+    #v-library { min-height: 100vh; }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(9,9,15,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      cursor: pointer;
+    }
+    .nav-logo svg { color: var(--accent-l); }
+    .nav-logo span { color: var(--accent-l); }
+    .nav-actions { display: flex; align-items: center; gap: 8px; }
+
+    .library-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+    .library-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .library-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+    .library-subtitle { color: var(--text2); font-size: 13px; }
+
+    /* Search bar */
+    .search-wrap {
+      position: relative;
+      margin-bottom: 32px;
+    }
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text3);
+      pointer-events: none;
+    }
+    .search-input {
+      padding-left: 40px;
+      padding-right: 100px;
+      height: 46px;
+      font-size: 14px;
+      border-radius: 12px;
+      background: var(--surface);
+      border-color: var(--border);
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-btn {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    /* Video grid */
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+
+    .video-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.15s;
+      position: relative;
+    }
+    .video-card:hover {
+      border-color: var(--border2);
+      transform: translateY(-2px);
+    }
+    .video-card:hover .card-chat-btn { opacity: 1; }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .card-meta { display: flex; align-items: center; gap: 8px; }
+    .card-time { font-size: 11px; color: var(--text3); }
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 14px;
+      color: var(--text);
+    }
+    .card-points {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .card-points li {
+      font-size: 12px;
+      color: var(--text2);
+      padding-left: 14px;
+      position: relative;
+      line-height: 1.5;
+    }
+    .card-points li::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: var(--accent-l);
+    }
+    .card-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-chat-btn {
+      opacity: 0;
+      transition: opacity 0.15s;
+      font-size: 12px;
+      padding: 5px 12px;
+    }
+    .card-delete-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      opacity: 0;
+      transition: opacity 0.15s;
+      padding: 4px 6px;
+      border-radius: 6px;
+      border: none;
+      background: rgba(239,68,68,0.1);
+      color: var(--red);
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .video-card:hover .card-delete-btn { opacity: 1; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 80px 24px;
+      color: var(--text2);
+    }
+    .empty-state svg { margin: 0 auto 16px; color: var(--text3); display: block; }
+    .empty-state h3 { font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .empty-state p { font-size: 13px; line-height: 1.6; }
+
+    /* ══════════════════════════════════════════════
+       VIEW: VIDEO CHAT
+    ══════════════════════════════════════════════ */
+    #v-video-chat {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-nav {
+      background: rgba(9,9,15,0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .chat-nav-info { flex: 1; min-width: 0; }
+    .chat-nav-title {
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .chat-nav-meta { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+    .chat-nav-meta span { font-size: 11px; color: var(--text3); }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      max-width: 760px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      animation: fadeUp 0.2s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .message-avatar.ai {
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-glow);
+      color: var(--accent-l);
+    }
+    .message-avatar.user {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      color: var(--text2);
+    }
+
+    .message-content {
+      flex: 1;
+      min-width: 0;
+    }
+    .message-name {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text2);
+    }
+    .message-name.ai { color: var(--accent-l); }
+    .message-body {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text);
+    }
+    .message-body p { margin-bottom: 8px; }
+    .message-body p:last-child { margin-bottom: 0; }
+    .message-body ul, .message-body ol {
+      padding-left: 20px;
+      margin: 8px 0;
+    }
+    .message-body li { margin-bottom: 4px; }
+    .message-body code {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 12px;
+    }
+    .message-body pre {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+    .message-body pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 13px;
+    }
+    .message-body strong { color: var(--text); font-weight: 600; }
+
+    /* Typing indicator */
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      padding: 4px 0;
+    }
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-l);
+      animation: typingBounce 1.2s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+      30% { transform: translateY(-4px); opacity: 1; }
+    }
+
+    /* Chat input */
+    .chat-input-wrap {
+      border-top: 1px solid var(--border);
+      background: var(--bg);
+      padding: 16px 24px;
+    }
+    .chat-input-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .chat-textarea {
+      flex: 1;
+      min-height: 44px;
+      max-height: 160px;
+      resize: none;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .chat-send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--accent);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.15s;
+      color: white;
+    }
+    .chat-send-btn:hover { background: var(--accent-l); }
+    .chat-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ══════════════════════════════════════════════
+       MODAL BASE
+    ══════════════════════════════════════════════ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 28px;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .modal-title { font-size: 17px; font-weight: 700; }
+    .modal-close {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text2);
+      transition: all 0.15s;
+    }
+    .modal-close:hover { border-color: var(--border2); color: var(--text); }
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text2);
+      margin-bottom: 6px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Processing overlay inside modal */
+    .processing-overlay {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      gap: 14px;
+    }
+    .processing-spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--border2);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ══════════════════════════════════════════════
+       MODAL: LIBRARY CHAT
+    ══════════════════════════════════════════════ */
+    #modal-library-chat .modal-box {
+      max-width: 680px;
+      height: 80vh;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      overflow: hidden;
+    }
+    .lc-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .lc-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .lc-input-wrap {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      gap: 10px;
+    }
+    .lc-textarea {
+      flex: 1;
+      min-height: 40px;
+      max-height: 100px;
+      resize: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+    }
+    .lc-send-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--accent);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .lc-send-btn:hover { background: var(--accent-l); }
+    .lc-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ══════════════════════════════════════════════
+       MODAL: DIGEST
+    ══════════════════════════════════════════════ */
+    #modal-digest .modal-box {
+      max-width: 600px;
+      max-height: 88vh;
+    }
+    .digest-content {
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+    .digest-content strong { color: var(--text); font-weight: 600; }
+    .digest-content hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 16px 0;
+    }
+
+    /* ══════════════════════════════════════════════
+       TOAST
+    ══════════════════════════════════════════════ */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast-item {
+      background: var(--surface3);
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--text);
+      animation: toastIn 0.2s ease;
+      max-width: 300px;
+    }
+    .toast-item.error { border-color: rgba(239,68,68,0.4); color: var(--red); }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ══════════════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════════════ */
+    @media (max-width: 600px) {
+      .video-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .nav { padding: 0 16px; }
+      .library-content { padding: 20px 16px; }
+      .chat-messages { padding: 16px; }
+      .chat-input-wrap { padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ VIEW: SETUP ══════════════════════════════════ -->
+<div id="v-setup" class="hidden">
+  <div class="setup-card">
+    <div class="setup-logo">
+      <div class="setup-logo-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-l)">
+          <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
+          <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
+        </svg>
+      </div>
+      <div class="setup-logo-name">Reel<span>Brain</span></div>
+    </div>
+
+    <div class="setup-tagline">Your personal video memory.</div>
+    <div class="setup-sub">Save videos from anywhere. Ask questions. Get answers — like that friend who actually remembers what they watched.</div>
+
+    <label class="setup-label">Anthropic API Key</label>
+    <input type="password" id="setup-key-input" placeholder="sk-ant-..." autocomplete="off">
+    <div class="setup-hint">
+      Get your key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> — stored only in your browser.
+    </div>
+
+    <button class="btn btn-primary w-full" style="margin-top:20px;justify-content:center;height:44px" onclick="handleSetupSave()">
+      Let's go
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+
+    <div class="setup-features">
+      <div class="setup-feature">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+        Save videos from TikTok, Instagram & YouTube Shorts
+      </div>
+      <div class="setup-feature">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+        Chat about any video — ask questions, get steps, see examples
+      </div>
+      <div class="setup-feature">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+        Search across your whole library in plain English
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ VIEW: LIBRARY ════════════════════════════════ -->
+<div id="v-library" class="hidden">
+  <nav class="nav">
+    <div class="nav-logo" onclick="showLibrary()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
+        <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
+      </svg>
+      Reel<span>Brain</span>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-secondary" onclick="openDigestModal()" style="font-size:12px;padding:7px 14px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        This week
+      </button>
+      <button class="btn btn-primary" onclick="openAddModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add video
+      </button>
+    </div>
+  </nav>
+
+  <div class="library-content">
+    <div class="library-header">
+      <div>
+        <div class="library-title">Your Library</div>
+        <div class="library-subtitle" id="lib-count">0 videos saved</div>
+      </div>
+    </div>
+
+    <div class="search-wrap">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" class="search-input" id="lib-search" placeholder="Ask anything about your saved videos…" onkeydown="handleSearchKey(event)">
+      <button class="btn btn-primary search-btn" onclick="openLibraryChat(document.getElementById('lib-search').value)" style="font-size:12px;padding:6px 14px">
+        Ask AI
+      </button>
+    </div>
+
+    <div id="video-grid" class="video-grid"></div>
+  </div>
+</div>
+
+<!-- ══ VIEW: VIDEO CHAT ═════════════════════════════ -->
+<div id="v-video-chat" class="hidden">
+  <div class="chat-nav">
+    <button class="btn-ghost" onclick="showLibrary()" style="padding:6px 10px;border-radius:8px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="chat-nav-info">
+      <div class="chat-nav-title" id="vc-title"></div>
+      <div class="chat-nav-meta">
+        <span id="vc-badge"></span>
+        <span>·</span>
+        <span id="vc-date"></span>
+        <span>·</span>
+        <span id="vc-category" style="color:var(--accent-l)"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-messages" id="vc-messages"></div>
+
+  <div class="chat-input-wrap">
+    <div class="chat-input-inner">
+      <textarea class="chat-textarea" id="vc-input" placeholder="Ask anything about this video…" rows="1"
+        onkeydown="handleVCKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="chat-send-btn" id="vc-send-btn" onclick="sendVCMessage()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: ADD VIDEO ═════════════════════════════ -->
+<div id="modal-add" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">Add a video</div>
+      <button class="modal-close" onclick="closeModal('modal-add')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div id="add-form-content">
+      <div class="form-group">
+        <label class="form-label">Video URL (optional)</label>
+        <input type="url" id="add-url" placeholder="https://tiktok.com/..." oninput="detectSource()">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Source</label>
+          <select id="add-source">
+            <option value="tiktok">TikTok</option>
+            <option value="instagram">Instagram</option>
+            <option value="youtube_shorts">YouTube Shorts</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Duration (seconds)</label>
+          <input type="number" id="add-duration" placeholder="60" value="60" min="1">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input type="text" id="add-title" placeholder="What's this video about?">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Transcript / Notes</label>
+        <textarea id="add-transcript" rows="6" placeholder="Paste the transcript or summarise what the video covers. The more detail, the better the chat."></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-secondary" onclick="closeModal('modal-add')">Cancel</button>
+        <button class="btn btn-secondary" id="process-btn" onclick="processVideo()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M22 2l-10 10"/><path d="M15 2h7v7"/></svg>
+          Process with AI
+        </button>
+        <button class="btn btn-primary" onclick="saveVideo()">Save</button>
+      </div>
+    </div>
+
+    <div id="add-processing" class="processing-overlay hidden">
+      <div class="processing-spinner"></div>
+      <div style="color:var(--text2);font-size:13px">Processing with AI…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: LIBRARY CHAT ══════════════════════════ -->
+<div id="modal-library-chat" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="lc-header">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:28px;height:28px;background:var(--accent-dim);border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid var(--accent-glow)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-l)" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </div>
+        <div style="font-weight:600;font-size:15px">Ask your library</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-library-chat')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="lc-messages" id="lc-messages"></div>
+
+    <div class="lc-input-wrap">
+      <textarea class="lc-textarea" id="lc-input" placeholder="What do you want to know?" rows="1"
+        onkeydown="handleLCKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="lc-send-btn" id="lc-send-btn" onclick="sendLCMessage()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: WEEKLY DIGEST ═════════════════════════ -->
+<div id="modal-digest" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;background:var(--accent-dim);border-radius:10px;display:flex;align-items:center;justify-content:center;border:1px solid var(--accent-glow)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent-l)" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="modal-title">Weekly Digest</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-digest')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div id="digest-body">
+      <div class="processing-overlay">
+        <div class="processing-spinner"></div>
+        <div style="color:var(--text2);font-size:13px">Generating your digest…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST CONTAINER ══════════════════════════════ -->
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════ -->
+<script>
+// ── CONFIG ──────────────────────────────────────────
+marked.use({ breaks: true, gfm: true });
+
+// ── SAMPLE DATA ─────────────────────────────────────
+const SAMPLE_VIDEOS = [
+  {
+    id: 'sample-react',
+    title: 'React Hooks: useState vs useReducer',
+    source: 'youtube_shorts',
+    url: '',
+    saved_at: new Date(Date.now() - 2*86400000).toISOString(),
+    transcript: `In this video we cover when to use useState versus useReducer in React. useState is perfect for simple, independent values like a toggle or a text input. useReducer shines when you have multiple related state values that change together. For example, if you have a form with name, email, and age — one reducer handles all of them cleanly. The rule of thumb: if you're writing three or more related useStates, consider switching to useReducer. Nested useState objects are usually a signal to refactor. useReducer also makes testing easier since the logic lives outside the component. Here's a quick example of what a form reducer looks like versus separate useStates. The reducer version is much cleaner and easier to reason about.`,
+    category: 'Technology',
+    subcategory: 'React / Frontend',
+    duration_seconds: 62,
+    summary: 'Quick guide on choosing between useState and useReducer in React, with practical examples.',
+    key_points: ['useState for simple, independent values','useReducer when you have multiple related sub-values','Nested useState = signal to switch to useReducer','Logic in useReducer lives outside the component — easier to test'],
+    action_items: ['Audit current forms — replace 3+ related useStates with useReducer','Write unit tests for reducer functions separately'],
+    tags: ['react','hooks','useState','useReducer','frontend'],
+    entities: { tools: ['React'], concepts: ['state management','hooks','component architecture'], people: [] }
+  },
+  {
+    id: 'sample-habits',
+    title: 'Atomic Habits — The 1% Rule',
+    source: 'instagram',
+    url: '',
+    saved_at: new Date(Date.now() - 14*86400000).toISOString(),
+    transcript: `James Clear's Atomic Habits boils down to one idea: get 1% better every day. The math is wild — 1% better every day for a year makes you 37 times better. 1% worse every day leaves you near zero. The key insight is that goals are about direction, but systems are about progress. Winners and losers have the same goals. The system is what separates them. Habit stacking: attach a new habit to an existing one. After I pour my coffee, I will meditate for 2 minutes. Identity-based habits are more powerful: don't say "I want to run a marathon" — say "I am a runner." Your habits are casting votes for the type of person you want to become.`,
+    category: 'Personal Development',
+    subcategory: 'Habits & Mindset',
+    duration_seconds: 90,
+    summary: 'Key principles from Atomic Habits — small improvements compound dramatically over time.',
+    key_points: ['1% better every day = 37x better in a year','Systems matter more than goals','Habit stacking: attach new habits to existing ones','Identity-based habits beat outcome-based ones'],
+    action_items: ['Pick one habit to stack onto morning coffee','Reframe one goal as an identity statement'],
+    tags: ['habits','atomic habits','james clear','self-improvement','mindset'],
+    entities: { tools: [], concepts: ['habit formation','compound growth','identity','systems thinking'], people: ['James Clear'] }
+  },
+  {
+    id: 'sample-etfs',
+    title: 'Index Funds vs ETFs — The Real Difference',
+    source: 'tiktok',
+    url: '',
+    saved_at: new Date(Date.now() - 1*86400000).toISOString(),
+    transcript: `Everyone confuses index funds and ETFs but the difference is simple. Both track an index — like the S&P 500 — so your returns will be nearly identical. The difference is HOW you buy them. ETFs trade on an exchange like stocks. You can buy and sell any time the market is open and the price changes throughout the day. Index funds settle once a day after market close — you get the end-of-day price no matter when you place your order. For long-term investing, this difference barely matters. ETFs usually have lower expense ratios and no minimum investment. Index funds sometimes have higher minimums but easier automatic investing. Bottom line: both are great. ETFs if you want flexibility, index funds if you want simplicity.`,
+    category: 'Finance',
+    subcategory: 'Investing',
+    duration_seconds: 75,
+    summary: 'Clear breakdown of the practical differences between index funds and ETFs for everyday investors.',
+    key_points: ['Both track indexes — returns are nearly identical','ETFs trade live throughout the day like stocks','Index funds settle once daily at market close','ETFs usually have lower expense ratios and no minimum'],
+    action_items: ['Check expense ratios on current holdings','Decide: flexibility (ETF) vs simplicity (index fund)'],
+    tags: ['investing','ETF','index funds','finance','S&P 500'],
+    entities: { tools: [], concepts: ['index funds','ETFs','expense ratios','passive investing'], people: [] }
+  }
+];
+
+// ── STATE ────────────────────────────────────────────
+const state = {
+  apiKey: '',
+  videos: [],
+  currentVideoId: null,
+  videoMessages: {},   // { videoId: [messages] }
+  libraryMessages: [],
+  vcLoading: false,
+  lcLoading: false,
+};
+
+// ── STORAGE ──────────────────────────────────────────
+function loadState() {
+  state.apiKey = localStorage.getItem('rb_key') || '';
+  const stored = localStorage.getItem('rb_videos');
+  state.videos = stored ? JSON.parse(stored) : [...SAMPLE_VIDEOS];
+  const msgs = localStorage.getItem('rb_video_msgs');
+  state.videoMessages = msgs ? JSON.parse(msgs) : {};
+  const lcMsgs = localStorage.getItem('rb_lc_msgs');
+  state.libraryMessages = lcMsgs ? JSON.parse(lcMsgs) : [];
+}
+
+function saveVideos() {
+  localStorage.setItem('rb_videos', JSON.stringify(state.videos));
+}
+
+function saveVideoMessages() {
+  localStorage.setItem('rb_video_msgs', JSON.stringify(state.videoMessages));
+}
+
+function saveLCMessages() {
+  localStorage.setItem('rb_lc_msgs', JSON.stringify(state.libraryMessages));
+}
+
+// ── INIT ─────────────────────────────────────────────
+function init() {
+  loadState();
+  if (!state.apiKey) {
+    show('v-setup');
+  } else {
+    show('v-library');
+    renderLibrary();
+  }
+}
+
+// ── VIEWS ────────────────────────────────────────────
+function show(viewId) {
+  ['v-setup','v-library','v-video-chat'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('hidden');
+  });
+  const target = document.getElementById(viewId);
+  if (target) target.classList.remove('hidden');
+}
+
+function showLibrary() {
+  show('v-library');
+  renderLibrary();
+}
+
+// ── SETUP ────────────────────────────────────────────
+function handleSetupSave() {
+  const key = document.getElementById('setup-key-input').value.trim();
+  if (!key || !key.startsWith('sk-ant-')) {
+    toast('Enter a valid Anthropic API key (starts with sk-ant-)', true);
+    return;
+  }
+  state.apiKey = key;
+  localStorage.setItem('rb_key', key);
+  show('v-library');
+  renderLibrary();
+}
+
+document.getElementById('setup-key-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleSetupSave();
+});
+
+// ── LIBRARY ──────────────────────────────────────────
+function renderLibrary() {
+  const grid = document.getElementById('video-grid');
+  const count = document.getElementById('lib-count');
+  const n = state.videos.length;
+  count.textContent = n === 1 ? '1 video saved' : `${n} videos saved`;
+
+  if (n === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+        <h3>No videos yet</h3>
+        <p>Hit "Add video" to save your first one.<br>Your library will live here.</p>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = state.videos.map(v => `
+    <div class="video-card" onclick="openVideoChat('${v.id}')">
+      <button class="card-delete-btn" onclick="event.stopPropagation();deleteVideo('${v.id}')">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="card-top">
+        <div class="card-meta">
+          <span class="badge badge-${v.source}">${sourceLabel(v.source)}</span>
+        </div>
+        <span class="card-time">${timeAgo(v.saved_at)}</span>
+      </div>
+      <div class="card-title">${escHtml(v.title)}</div>
+      <ul class="card-points">
+        ${v.key_points.slice(0,3).map(p => `<li>${escHtml(p)}</li>`).join('')}
+      </ul>
+      <div class="card-bottom">
+        <span class="badge badge-category">${escHtml(v.category)}</span>
+        <button class="btn btn-secondary card-chat-btn" onclick="event.stopPropagation();openVideoChat('${v.id}')">Chat →</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteVideo(id) {
+  if (!confirm('Remove this video from your library?')) return;
+  state.videos = state.videos.filter(v => v.id !== id);
+  delete state.videoMessages[id];
+  saveVideos();
+  saveVideoMessages();
+  renderLibrary();
+}
+
+// ── VIDEO CHAT ───────────────────────────────────────
+async function openVideoChat(videoId) {
+  const video = state.videos.find(v => v.id === videoId);
+  if (!video) return;
+
+  state.currentVideoId = videoId;
+
+  // Update header
+  document.getElementById('vc-title').textContent = video.title;
+  document.getElementById('vc-badge').outerHTML = `<span id="vc-badge" class="badge badge-${video.source}">${sourceLabel(video.source)}</span>`;
+  document.getElementById('vc-date').textContent = timeAgo(video.saved_at);
+  document.getElementById('vc-category').textContent = video.category;
+
+  show('v-video-chat');
+  renderVCMessages();
+
+  // Auto-open if no messages yet
+  if (!state.videoMessages[videoId] || state.videoMessages[videoId].length === 0) {
+    state.videoMessages[videoId] = [];
+    await doVCCall('OPEN_CHAT', true);
+  }
+}
+
+function renderVCMessages() {
+  const msgs = state.videoMessages[state.currentVideoId] || [];
+  const container = document.getElementById('vc-messages');
+  container.innerHTML = msgs.filter(m => !m.hidden).map(m => messageHTML(m.role, m.content)).join('');
+  scrollToBottom(container);
+}
+
+async function sendVCMessage() {
+  const input = document.getElementById('vc-input');
+  const text = input.value.trim();
+  if (!text || state.vcLoading) return;
+  input.value = '';
+  autoResize(input);
+
+  const msgs = state.videoMessages[state.currentVideoId] || [];
+  msgs.push({ role: 'user', content: text });
+  state.videoMessages[state.currentVideoId] = msgs;
+  renderVCMessages();
+
+  await doVCCall(text, false);
+}
+
+async function doVCCall(userText, isAutoOpen) {
+  const video = state.videos.find(v => v.id === state.currentVideoId);
+  const msgs = state.videoMessages[state.currentVideoId] || [];
+
+  const apiMessages = isAutoOpen
+    ? [{ role: 'user', content: 'OPEN_CHAT' }]
+    : msgs.map(m => ({ role: m.role, content: m.content }));
+
+  const context = {
+    video: {
+      title: video.title,
+      source: video.source,
+      saved_at: video.saved_at,
+      transcript: video.transcript,
+      category: video.category,
+      subcategory: video.subcategory,
+      duration_seconds: video.duration_seconds,
+      key_points: video.key_points,
+      action_items: video.action_items,
+      tags: video.tags,
+      entities: video.entities
+    }
+  };
+
+  state.vcLoading = true;
+  document.getElementById('vc-send-btn').disabled = true;
+
+  const container = document.getElementById('vc-messages');
+  const loadingEl = addLoadingMessage(container);
+
+  try {
+    const resp = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ api_key: state.apiKey, mode: 'video_chat', context, messages: apiMessages })
+    });
+
+    let fullText = '';
+    await streamSSE(resp, chunk => {
+      fullText += chunk;
+      loadingEl.querySelector('.message-body').innerHTML = marked.parse(fullText);
+      scrollToBottom(container);
+    });
+
+    loadingEl.remove();
+    if (isAutoOpen) {
+      msgs.push({ role: 'user', content: 'OPEN_CHAT', hidden: true });
+    }
+    msgs.push({ role: 'assistant', content: fullText });
+    state.videoMessages[state.currentVideoId] = msgs;
+    saveVideoMessages();
+    renderVCMessages();
+
+  } catch (err) {
+    loadingEl.remove();
+    toast(err.message || 'Something went wrong', true);
+  }
+
+  state.vcLoading = false;
+  document.getElementById('vc-send-btn').disabled = false;
+  document.getElementById('vc-input').focus();
+}
+
+function handleVCKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendVCMessage();
+  }
+}
+
+// ── LIBRARY CHAT ─────────────────────────────────────
+function openLibraryChat(initialQuery) {
+  document.getElementById('modal-library-chat').classList.remove('hidden');
+
+  // Restore existing messages
+  renderLCMessages();
+
+  if (initialQuery && initialQuery.trim()) {
+    document.getElementById('lc-input').value = initialQuery;
+    document.getElementById('lib-search').value = '';
+    setTimeout(sendLCMessage, 100);
+  } else {
+    setTimeout(() => document.getElementById('lc-input').focus(), 100);
+  }
+}
+
+function renderLCMessages() {
+  const container = document.getElementById('lc-messages');
+
+  if (state.libraryMessages.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:40px 0;color:var(--text3)">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px;display:block"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <div style="font-size:13px">Ask anything about your library</div>
+        <div style="font-size:12px;margin-top:4px">"what do I know about investing?" · "find me something about habits"</div>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = state.libraryMessages.map(m => messageHTML(m.role, m.content)).join('');
+  scrollToBottom(container);
+}
+
+async function sendLCMessage() {
+  const input = document.getElementById('lc-input');
+  const text = input.value.trim();
+  if (!text || state.lcLoading) return;
+  input.value = '';
+  autoResize(input);
+
+  state.libraryMessages.push({ role: 'user', content: text });
+  renderLCMessages();
+
+  const libraryContext = state.videos.map(v => ({
+    video_id: v.id,
+    title: v.title,
+    category: v.category,
+    subcategory: v.subcategory,
+    saved_at: v.saved_at,
+    summary: v.summary,
+    key_points: v.key_points,
+    action_items: v.action_items,
+    tags: v.tags,
+    entities: v.entities
+  }));
+
+  const context = { query: text, library: libraryContext };
+
+  state.lcLoading = true;
+  document.getElementById('lc-send-btn').disabled = true;
+
+  const container = document.getElementById('lc-messages');
+  const loadingEl = addLoadingMessage(container);
+
+  try {
+    const resp = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: state.apiKey,
+        mode: 'library_chat',
+        context,
+        messages: state.libraryMessages.map(m => ({ role: m.role, content: m.content }))
+      })
+    });
+
+    let fullText = '';
+    await streamSSE(resp, chunk => {
+      fullText += chunk;
+      loadingEl.querySelector('.message-body').innerHTML = marked.parse(fullText);
+      scrollToBottom(container);
+    });
+
+    loadingEl.remove();
+    state.libraryMessages.push({ role: 'assistant', content: fullText });
+    saveLCMessages();
+    renderLCMessages();
+
+  } catch (err) {
+    loadingEl.remove();
+    toast(err.message || 'Something went wrong', true);
+  }
+
+  state.lcLoading = false;
+  document.getElementById('lc-send-btn').disabled = false;
+  document.getElementById('lc-input').focus();
+}
+
+function handleLCKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendLCMessage();
+  }
+}
+
+function handleSearchKey(e) {
+  if (e.key === 'Enter') {
+    const val = e.target.value.trim();
+    if (val) openLibraryChat(val);
+  }
+}
+
+// ── ADD VIDEO MODAL ──────────────────────────────────
+function openAddModal() {
+  document.getElementById('add-url').value = '';
+  document.getElementById('add-title').value = '';
+  document.getElementById('add-transcript').value = '';
+  document.getElementById('add-duration').value = '60';
+  document.getElementById('add-source').value = 'tiktok';
+  document.getElementById('add-form-content').classList.remove('hidden');
+  document.getElementById('add-processing').classList.add('hidden');
+  document.getElementById('modal-add').classList.remove('hidden');
+}
+
+function detectSource() {
+  const url = document.getElementById('add-url').value;
+  const sel = document.getElementById('add-source');
+  if (url.includes('tiktok.com')) sel.value = 'tiktok';
+  else if (url.includes('instagram.com')) sel.value = 'instagram';
+  else if (url.includes('youtube.com') || url.includes('youtu.be')) sel.value = 'youtube_shorts';
+}
+
+async function processVideo() {
+  const title = document.getElementById('add-title').value.trim();
+  const transcript = document.getElementById('add-transcript').value.trim();
+
+  if (!title && !transcript) {
+    toast('Add a title or transcript first', true);
+    return;
+  }
+
+  document.getElementById('add-form-content').classList.add('hidden');
+  document.getElementById('add-processing').classList.remove('hidden');
+
+  try {
+    const resp = await fetch('/api/process', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ api_key: state.apiKey, title, transcript })
+    });
+
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error);
+
+    // Fill in processed fields
+    if (!title && data.summary) document.getElementById('add-title').value = data.summary.slice(0, 60);
+
+    document.getElementById('add-form-content').classList.remove('hidden');
+    document.getElementById('add-processing').classList.add('hidden');
+
+    // Store for use in saveVideo
+    document.getElementById('add-form-content').dataset.processed = JSON.stringify(data);
+    toast('Processed — looks good. Review and save.');
+
+  } catch (err) {
+    document.getElementById('add-form-content').classList.remove('hidden');
+    document.getElementById('add-processing').classList.add('hidden');
+    toast(err.message || 'Processing failed', true);
+  }
+}
+
+function saveVideo() {
+  const title = document.getElementById('add-title').value.trim();
+  const transcript = document.getElementById('add-transcript').value.trim();
+
+  if (!title) { toast('Add a title', true); return; }
+  if (!transcript) { toast('Add a transcript or notes', true); return; }
+
+  const processedRaw = document.getElementById('add-form-content').dataset.processed;
+  const processed = processedRaw ? JSON.parse(processedRaw) : null;
+
+  const video = {
+    id: 'v-' + Date.now(),
+    title,
+    source: document.getElementById('add-source').value,
+    url: document.getElementById('add-url').value.trim(),
+    saved_at: new Date().toISOString(),
+    transcript,
+    category: processed?.category || 'Other',
+    subcategory: processed?.subcategory || '',
+    duration_seconds: parseInt(document.getElementById('add-duration').value) || 60,
+    summary: processed?.summary || transcript.slice(0, 120),
+    key_points: processed?.key_points || [transcript.slice(0, 60)],
+    action_items: processed?.action_items || [],
+    tags: processed?.tags || [],
+    entities: processed?.entities || { tools: [], concepts: [], people: [] }
+  };
+
+  state.videos.unshift(video);
+  saveVideos();
+  delete document.getElementById('add-form-content').dataset.processed;
+  closeModal('modal-add');
+  renderLibrary();
+  toast('Video saved to your library');
+}
+
+// ── DIGEST ───────────────────────────────────────────
+async function openDigestModal() {
+  document.getElementById('modal-digest').classList.remove('hidden');
+  const body = document.getElementById('digest-body');
+  body.innerHTML = `<div class="processing-overlay"><div class="processing-spinner"></div><div style="color:var(--text2);font-size:13px">Generating your digest…</div></div>`;
+
+  const now = new Date();
+  const weekAgo = new Date(now - 7*86400000);
+
+  const recentVideos = state.videos
+    .filter(v => new Date(v.saved_at) >= weekAgo)
+    .map(v => ({
+      video_id: v.id, title: v.title, category: v.category,
+      subcategory: v.subcategory, saved_at: v.saved_at,
+      summary: v.summary, key_points: v.key_points,
+      action_items: v.action_items, tags: v.tags
+    }));
+
+  if (recentVideos.length === 0) {
+    body.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text2);font-size:14px">Nothing saved this week yet.<br><span style="color:var(--text3);font-size:12px">Add some videos and check back.</span></div>`;
+    return;
+  }
+
+  try {
+    const resp = await fetch('/api/digest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: state.apiKey,
+        videos: recentVideos,
+        week_start: weekAgo.toISOString(),
+        week_end: now.toISOString()
+      })
+    });
+
+    let fullText = '';
+    body.innerHTML = `<div class="digest-content" id="digest-text"></div>`;
+    const digestEl = document.getElementById('digest-text');
+
+    await streamSSE(resp, chunk => {
+      fullText += chunk;
+      digestEl.innerHTML = marked.parse(fullText);
+    });
+
+  } catch (err) {
+    body.innerHTML = `<div style="color:var(--red);padding:20px;font-size:13px">${err.message}</div>`;
+  }
+}
+
+// ── STREAMING HELPER ─────────────────────────────────
+async function streamSSE(response, onChunk) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      const data = line.slice(6).trim();
+      if (data === '[DONE]') return;
+      try {
+        const parsed = JSON.parse(data);
+        if (parsed.error) throw new Error(parsed.error);
+        if (parsed.text) onChunk(parsed.text);
+      } catch (e) {
+        if (e.message !== 'Unexpected end of JSON input') throw e;
+      }
+    }
+  }
+}
+
+// ── MESSAGES ─────────────────────────────────────────
+function messageHTML(role, content) {
+  const isAI = role === 'assistant';
+  const avatar = isAI
+    ? `<div class="message-avatar ai"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg></div>`
+    : `<div class="message-avatar user"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/></svg></div>`;
+
+  return `
+    <div class="message">
+      ${avatar}
+      <div class="message-content">
+        <div class="message-name ${isAI ? 'ai' : ''}">${isAI ? 'ReelBrain' : 'You'}</div>
+        <div class="message-body">${marked.parse(content)}</div>
+      </div>
+    </div>`;
+}
+
+function addLoadingMessage(container) {
+  const el = document.createElement('div');
+  el.className = 'message';
+  el.innerHTML = `
+    <div class="message-avatar ai">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
+        <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
+      </svg>
+    </div>
+    <div class="message-content">
+      <div class="message-name ai">ReelBrain</div>
+      <div class="message-body">
+        <div class="typing-indicator">
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+          <div class="typing-dot"></div>
+        </div>
+      </div>
+    </div>`;
+  container.appendChild(el);
+  scrollToBottom(container);
+  return el;
+}
+
+// ── MODALS ───────────────────────────────────────────
+function closeModal(id) {
+  document.getElementById(id).classList.add('hidden');
+}
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) closeModal(overlay.id);
+  });
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    ['modal-add','modal-library-chat','modal-digest'].forEach(id => {
+      document.getElementById(id).classList.add('hidden');
+    });
+  }
+});
+
+// ── UTILITIES ────────────────────────────────────────
+function sourceLabel(source) {
+  return { instagram: 'Instagram', tiktok: 'TikTok', youtube_shorts: 'YT Shorts', other: 'Other' }[source] || source;
+}
+
+function timeAgo(isoStr) {
+  const diff = Date.now() - new Date(isoStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  const hrs = Math.floor(diff / 3600000);
+  const days = Math.floor(diff / 86400000);
+  const weeks = Math.floor(days / 7);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  if (hrs < 24) return `${hrs}h ago`;
+  if (days < 7) return `${days}d ago`;
+  if (weeks < 5) return `${weeks}w ago`;
+  return new Date(isoStr).toLocaleDateString();
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function scrollToBottom(el) {
+  el.scrollTop = el.scrollHeight;
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+
+function toast(msg, isError = false) {
+  const container = document.getElementById('toast');
+  const el = document.createElement('div');
+  el.className = 'toast-item' + (isError ? ' error' : '');
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ── START ────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
