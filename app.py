@@ -1,13 +1,27 @@
+# ============================================================
+# ReelBrain — Flask Backend
+# Handles all AI communication with the Anthropic Claude API.
+# The frontend (templates/index.html) calls these routes via
+# fetch(). No database — all video data lives in the browser.
+# ============================================================
+
+# ── IMPORTS ─────────────────────────────────────────────────
 try:
     from flask import Flask, request, jsonify, render_template, Response, stream_with_context  # type: ignore[import]
 except ImportError as e:
     raise ImportError("Flask is not installed or could not be imported. Install it with: pip install flask") from e
 
-import anthropic
+import anthropic  # Anthropic Python SDK for Claude API calls
 import json
 
 app = Flask(__name__)
 
+
+# ── SYSTEM PROMPT ────────────────────────────────────────────
+# This is the master instruction set for the ReelBrain AI persona.
+# It controls personality, tone, and behaviour across all three
+# operating modes: video_chat, library_chat, and weekly_digest.
+# Edit this to change how the AI responds to users.
 SYSTEM_PROMPT = """You are ReelBrain — a smart, warm, casual AI that acts as the user's personal video memory. You've "watched" every video the user has saved. You remember everything. You speak like a knowledgeable friend who genuinely wants to help — not a productivity tool, not a formal assistant.
 
 Your personality in one line: "That smart friend who watched the video with you — and still remembers it three months later."
@@ -122,33 +136,51 @@ Example closing lines:
 """
 
 
+# ── ROUTE: Home ──────────────────────────────────────────────
+# Serves the single-page frontend application.
 @app.route('/')
 def index():
     return render_template('index.html')
 
 
+# ── ROUTE: /api/chat ─────────────────────────────────────────
+# Application: Video Chat + Library Chat
+#
+# Accepts a list of chat messages and a context object, then
+# streams Claude's reply back as Server-Sent Events (SSE).
+# Supports two modes controlled by the `mode` field:
+#   - "video_chat"    → user is asking about one specific video
+#   - "library_chat"  → user is searching across all saved videos
+#
+# Context is injected as a fake user/assistant exchange at the
+# top of the message list so Claude always has full video data.
+# The API key is provided by the client on every request —
+# the server never stores credentials.
 @app.route('/api/chat', methods=['POST'])
 def chat():
     data = request.json
     api_key = data.get('api_key', '')
-    mode = data.get('mode', 'video_chat')
-    messages = data.get('messages', [])
-    context = data.get('context', {})
+    mode = data.get('mode', 'video_chat')       # "video_chat" or "library_chat"
+    messages = data.get('messages', [])          # Full conversation history from the frontend
+    context = data.get('context', {})            # Video data or library snapshot
 
     if not api_key:
         return jsonify({'error': 'No API key provided'}), 400
 
     try:
+        # Instantiate a fresh client per request using the user's own API key
         client = anthropic.Anthropic(api_key=api_key)
 
+        # Prepend context as a hidden user/assistant exchange so Claude
+        # understands the video data before the real conversation starts
         context_json = json.dumps({'mode': mode, **context}, indent=2)
-
         full_messages = [
             {'role': 'user', 'content': f'<context>\n{context_json}\n</context>'},
             {'role': 'assistant', 'content': 'Got it.'},
             *messages
         ]
 
+        # Stream Claude's response token-by-token using SSE
         def generate():
             try:
                 with client.messages.stream(
@@ -158,12 +190,14 @@ def chat():
                     messages=full_messages
                 ) as stream:
                     for text in stream.text_stream:
+                        # Each chunk is sent as a JSON-encoded SSE data line
                         yield f"data: {json.dumps({'text': text})}\n\n"
                 yield "data: [DONE]\n\n"
             except Exception as e:
                 yield f"data: {json.dumps({'error': str(e)})}\n\n"
                 yield "data: [DONE]\n\n"
 
+        # SSE headers prevent proxies and browsers from buffering the stream
         return Response(
             stream_with_context(generate()),
             mimetype='text/event-stream',
@@ -177,6 +211,14 @@ def chat():
         return jsonify({'error': str(e)}), 500
 
 
+# ── ROUTE: /api/process ──────────────────────────────────────
+# Application: Add Video Modal — "Process with AI" button
+#
+# Takes a raw video title and transcript, sends them to Claude,
+# and returns structured metadata as JSON (non-streaming).
+# The response is used to auto-fill the video card fields:
+# category, subcategory, summary, key_points, action_items,
+# tags, entities (tools / concepts / people), and duration.
 @app.route('/api/process', methods=['POST'])
 def process_video():
     data = request.json
@@ -190,6 +232,8 @@ def process_video():
     try:
         client = anthropic.Anthropic(api_key=api_key)
 
+        # Ask Claude to return only raw JSON — no markdown fences —
+        # so we can parse it directly without post-processing ambiguity
         prompt = f"""Extract structured metadata from this video and return ONLY valid JSON — no extra text, no markdown fences.
 
 Title: {title}
@@ -217,6 +261,7 @@ Return this exact structure:
             messages=[{'role': 'user', 'content': prompt}]
         )
 
+        # Strip markdown code fences if Claude adds them despite instructions
         text = response.content[0].text.strip()
         if '```json' in text:
             text = text.split('```json')[1].split('```')[0].strip()
@@ -232,11 +277,18 @@ Return this exact structure:
         return jsonify({'error': str(e)}), 500
 
 
+# ── ROUTE: /api/digest ───────────────────────────────────────
+# Application: Weekly Digest Modal — "This week" button
+#
+# Receives a filtered list of videos saved in the past 7 days
+# and streams a structured weekly summary back via SSE.
+# Uses the WEEKLY DIGEST MODE section of SYSTEM_PROMPT to
+# format the output with categories, insights, and action items.
 @app.route('/api/digest', methods=['POST'])
 def digest():
     data = request.json
     api_key = data.get('api_key', '')
-    videos = data.get('videos', [])
+    videos = data.get('videos', [])         # Videos saved in the past 7 days
     week_start = data.get('week_start', '')
     week_end = data.get('week_end', '')
 
@@ -246,6 +298,7 @@ def digest():
     try:
         client = anthropic.Anthropic(api_key=api_key)
 
+        # Build the context payload — mode flag tells Claude to use digest format
         context = json.dumps({
             'mode': 'weekly_digest',
             'week_start': week_start,
@@ -253,11 +306,12 @@ def digest():
             'videos_saved': videos
         }, indent=2)
 
+        # Stream the digest response token-by-token via SSE
         def generate():
             try:
                 with client.messages.stream(
                     model='claude-sonnet-4-6',
-                    max_tokens=2048,
+                    max_tokens=2048,   # Digest can be longer than a single chat reply
                     system=SYSTEM_PROMPT,
                     messages=[{'role': 'user', 'content': context}]
                 ) as stream:
@@ -281,6 +335,9 @@ def digest():
         return jsonify({'error': str(e)}), 500
 
 
+# ── ENTRY POINT ──────────────────────────────────────────────
+# Reads PORT from the environment for Railway/Render deployment.
+# Falls back to 5001 for local development.
 if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5001))

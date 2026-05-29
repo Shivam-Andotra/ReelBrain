@@ -1034,10 +1034,23 @@
      JAVASCRIPT
 ══════════════════════════════════════════════════ -->
 <script>
-// ── CONFIG ──────────────────────────────────────────
+// ════════════════════════════════════════════════════
+// ReelBrain — Frontend Application
+// Single-page app with no framework. All state lives
+// in `state` (runtime) and localStorage (persistence).
+// The three main views are toggled with show(viewId).
+// ════════════════════════════════════════════════════
+
+// ── CONFIG ───────────────────────────────────────────
+// Configure marked.js to support GitHub-flavoured
+// markdown and convert newlines to <br> in chat replies
 marked.use({ breaks: true, gfm: true });
 
-// ── SAMPLE DATA ─────────────────────────────────────
+// ── SAMPLE DATA ──────────────────────────────────────
+// Pre-loaded demo videos shown to first-time users
+// (before they save any videos of their own).
+// Covers three categories so the library feels useful
+// immediately: Technology, Personal Development, Finance.
 const SAMPLE_VIDEOS = [
   {
     id: 'sample-react',
@@ -1090,20 +1103,29 @@ const SAMPLE_VIDEOS = [
 ];
 
 // ── STATE ────────────────────────────────────────────
+// Single runtime state object. Never read localStorage
+// directly — always go through loadState() / save fns.
 const state = {
   apiKey: '',
   videos: [],
   currentVideoId: null,
-  videoMessages: {},   // { videoId: [messages] }
-  libraryMessages: [],
-  vcLoading: false,
-  lcLoading: false,
+  videoMessages: {},   // { videoId: [messages] } — per-video chat history
+  libraryMessages: [], // Conversation history for the library chat modal
+  vcLoading: false,    // Prevents duplicate sends in video chat
+  lcLoading: false,    // Prevents duplicate sends in library chat
 };
 
 // ── STORAGE ──────────────────────────────────────────
+// localStorage keys:
+//   rb_key       — Anthropic API key
+//   rb_videos    — saved video library (JSON array)
+//   rb_video_msgs — per-video chat histories (JSON object)
+//   rb_lc_msgs   — library chat history (JSON array)
+
 function loadState() {
   state.apiKey = localStorage.getItem('rb_key') || '';
   const stored = localStorage.getItem('rb_videos');
+  // Fall back to sample videos on first launch (no saved videos yet)
   state.videos = stored ? JSON.parse(stored) : [...SAMPLE_VIDEOS];
   const msgs = localStorage.getItem('rb_video_msgs');
   state.videoMessages = msgs ? JSON.parse(msgs) : {};
@@ -1124,6 +1146,9 @@ function saveLCMessages() {
 }
 
 // ── INIT ─────────────────────────────────────────────
+// Entry point — called once on page load.
+// Routes to setup screen if no API key is stored,
+// otherwise goes straight to the video library.
 function init() {
   loadState();
   if (!state.apiKey) {
@@ -1135,6 +1160,8 @@ function init() {
 }
 
 // ── VIEWS ────────────────────────────────────────────
+// Hide all top-level views, then reveal only the target.
+// Views: v-setup | v-library | v-video-chat
 function show(viewId) {
   ['v-setup','v-library','v-video-chat'].forEach(id => {
     const el = document.getElementById(id);
@@ -1150,6 +1177,10 @@ function showLibrary() {
 }
 
 // ── SETUP ────────────────────────────────────────────
+// Application: Setup Screen (v-setup)
+// Validates the API key format before saving.
+// The key is stored in localStorage and sent with every
+// API request — the server never holds it.
 function handleSetupSave() {
   const key = document.getElementById('setup-key-input').value.trim();
   if (!key || !key.startsWith('sk-ant-')) {
@@ -1167,6 +1198,10 @@ document.getElementById('setup-key-input').addEventListener('keydown', e => {
 });
 
 // ── LIBRARY ──────────────────────────────────────────
+// Application: Library View (v-library)
+// Renders the video grid from state.videos.
+// Shows an empty state when no videos are saved.
+// Each card is clickable and opens Video Chat.
 function renderLibrary() {
   const grid = document.getElementById('video-grid');
   const count = document.getElementById('lib-count');
@@ -1218,6 +1253,12 @@ function deleteVideo(id) {
 }
 
 // ── VIDEO CHAT ───────────────────────────────────────
+// Application: Video Chat View (v-video-chat)
+// Opens a chat session for a single saved video.
+// On first open, automatically sends "OPEN_CHAT" to get
+// Claude's opening summary of the video (hidden from the
+// message list so it doesn't appear as a user message).
+// Chat history is persisted per video in localStorage.
 async function openVideoChat(videoId) {
   const video = state.videos.find(v => v.id === videoId);
   if (!video) return;
@@ -1262,10 +1303,14 @@ async function sendVCMessage() {
   await doVCCall(text, false);
 }
 
+// Core function that calls /api/chat in video_chat mode.
+// isAutoOpen=true sends only "OPEN_CHAT" (not full history)
+// so Claude generates the intro summary fresh each time.
 async function doVCCall(userText, isAutoOpen) {
   const video = state.videos.find(v => v.id === state.currentVideoId);
   const msgs = state.videoMessages[state.currentVideoId] || [];
 
+  // For auto-open, send a single trigger message instead of history
   const apiMessages = isAutoOpen
     ? [{ role: 'user', content: 'OPEN_CHAT' }]
     : msgs.map(m => ({ role: m.role, content: m.content }));
@@ -1333,6 +1378,12 @@ function handleVCKey(e) {
 }
 
 // ── LIBRARY CHAT ─────────────────────────────────────
+// Application: Library Chat Modal (modal-library-chat)
+// Lets the user search or ask questions across all saved
+// videos at once. Triggered by the search bar (Enter or
+// "Ask AI" button) or the nav search field.
+// Sends a snapshot of all video metadata (not transcripts)
+// to Claude so it can reference titles and key points.
 function openLibraryChat(initialQuery) {
   document.getElementById('modal-library-chat').classList.remove('hidden');
 
@@ -1445,6 +1496,12 @@ function handleSearchKey(e) {
 }
 
 // ── ADD VIDEO MODAL ──────────────────────────────────
+// Application: Add Video Modal (modal-add)
+// Two-step flow:
+//   1. User fills in title + transcript (URL optional)
+//   2. "Process with AI" calls /api/process to extract
+//      metadata; "Save" writes the video to state/localStorage
+// If the user skips processing, basic defaults are used.
 function openAddModal() {
   document.getElementById('add-url').value = '';
   document.getElementById('add-title').value = '';
@@ -1539,6 +1596,10 @@ function saveVideo() {
 }
 
 // ── DIGEST ───────────────────────────────────────────
+// Application: Weekly Digest Modal (modal-digest)
+// Filters state.videos to the past 7 days and streams a
+// structured summary from /api/digest. Shows a friendly
+// empty state if nothing was saved this week.
 async function openDigestModal() {
   document.getElementById('modal-digest').classList.remove('hidden');
   const body = document.getElementById('digest-body');
@@ -1588,6 +1649,10 @@ async function openDigestModal() {
 }
 
 // ── STREAMING HELPER ─────────────────────────────────
+// Shared by Video Chat, Library Chat, and Digest.
+// Reads the SSE response body chunk-by-chunk, splits on
+// newlines, and calls onChunk(text) for each data token.
+// Stops cleanly when it receives the "[DONE]" sentinel.
 async function streamSSE(response, onChunk) {
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -1617,6 +1682,9 @@ async function streamSSE(response, onChunk) {
 }
 
 // ── MESSAGES ─────────────────────────────────────────
+// Shared message rendering used by both Video Chat and
+// Library Chat. Returns an HTML string with avatar,
+// sender label, and markdown-rendered message body.
 function messageHTML(role, content) {
   const isAI = role === 'assistant';
   const avatar = isAI
@@ -1659,6 +1727,7 @@ function addLoadingMessage(container) {
 }
 
 // ── MODALS ───────────────────────────────────────────
+// Close on backdrop click or Escape key — both handled here.
 function closeModal(id) {
   document.getElementById(id).classList.add('hidden');
 }
@@ -1678,6 +1747,12 @@ document.addEventListener('keydown', e => {
 });
 
 // ── UTILITIES ────────────────────────────────────────
+// sourceLabel  — maps internal source key to display name
+// timeAgo      — human-readable relative timestamp
+// escHtml      — prevents XSS when injecting user content into innerHTML
+// scrollToBottom — keeps chat containers scrolled to latest message
+// autoResize   — expands textareas as the user types
+// toast        — temporary notification (bottom-right, auto-dismisses)
 function sourceLabel(source) {
   return { instagram: 'Instagram', tiktok: 'TikTok', youtube_shorts: 'YT Shorts', other: 'Other' }[source] || source;
 }
@@ -1719,6 +1794,7 @@ function toast(msg, isError = false) {
 }
 
 // ── START ────────────────────────────────────────────
+// Kick off the app once the DOM is ready
 init();
 </script>
 </body>
